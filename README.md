@@ -1,6 +1,6 @@
 # OnlyDNS MCP Server (`@onlydns/mcp`)
 
-Official Model Context Protocol (MCP) server for [OnlyDNS](https://onlydns.com), built on the official TypeScript SDK (`@onlydns/sdk`). Enables AI agents (such as Claude Desktop, Cursor, Junie, Windsurf, and Claude Code) to inspect and manage DNS zones, DNS records, DNSSEC configuration, and TSIG keys directly with your OnlyDNS account.
+Official Model Context Protocol (MCP) server for [OnlyDNS](https://www.onlydns.com), built on the official TypeScript SDK (`@onlydns/sdk`). Enables AI agents (such as Claude Desktop, Cursor, Junie, Windsurf, and Claude Code) to inspect and manage DNS zones, DNS records, DNSSEC configuration, and TSIG keys directly with your OnlyDNS account.
 
 ---
 
