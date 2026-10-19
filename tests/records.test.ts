@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OnlyDNSClient } from '../src/client/api.js';
-import { DNSRecord } from '../src/client/types.js';
+import { OnlyDNSClient, DNSRecord } from '@onlydns/sdk';
 
 test('Record manipulation - add, update, delete flow', async () => {
   let inMemoryRecords: DNSRecord[] = [
@@ -23,21 +22,18 @@ test('Record manipulation - add, update, delete flow', async () => {
     return new Response('Not found', { status: 404 });
   };
 
-  const client = new OnlyDNSClient(
-    { token: 'token-123', baseUrl: 'https://api.onlydns.com/v1' },
-    mockFetch
-  );
+  const client = new OnlyDNSClient({
+    apiToken: 'token-123',
+    baseUrl: 'https://api.onlydns.com/v1',
+    fetch: mockFetch,
+  });
 
   // 1. Initial get
   const records1 = await client.getRecords('example.com');
   assert.equal(records1.length, 2);
 
-  // 2. Add an MX record
-  const recordsWithMx = [
-    ...records1,
-    { name: 'example.com', type: 'MX', ttl: 300, records: ['10 mail.example.com.'] },
-  ];
-  await client.replaceRecords('example.com', recordsWithMx);
+  // 2. Add an MX record using SDK addRecord helper
+  await client.addRecord('example.com', 'example.com', 'MX', '10 mail.example.com.', 300);
 
   const records2 = await client.getRecords('example.com');
   assert.equal(records2.length, 3);
@@ -45,9 +41,8 @@ test('Record manipulation - add, update, delete flow', async () => {
   assert.ok(mx);
   assert.deepEqual(mx.records, ['10 mail.example.com.']);
 
-  // 3. Delete CNAME record
-  const recordsWithoutCname = records2.filter((r) => r.type !== 'CNAME');
-  await client.replaceRecords('example.com', recordsWithoutCname);
+  // 3. Delete CNAME record using SDK removeRecord helper
+  await client.removeRecord('example.com', 'www.example.com', 'CNAME');
 
   const records3 = await client.getRecords('example.com');
   assert.equal(records3.length, 2);

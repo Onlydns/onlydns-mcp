@@ -1,41 +1,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { OnlyDNSClient } from '../client/api.js';
+import { OnlyDNSClient, TsigAlgorithm } from '@onlydns/sdk';
 import { normalizeDomain } from '../utils/dns.js';
 
 export function registerTsigTools(server: McpServer, client: OnlyDNSClient): void {
   // 1. List TSIG Keys
   server.tool(
     'list_tsig_keys',
-    'List all TSIG keys for the OnlyDNS account, or list TSIG keys enabled for a specific domain.',
-    {
-      domainName: z
-        .string()
-        .optional()
-        .describe('Optional domain name to list TSIG keys specific to that domain.'),
-    },
-    async ({ domainName }) => {
+    'List all TSIG keys configured for the OnlyDNS account.',
+    {},
+    async () => {
       try {
-        if (domainName) {
-          const cleanDomain = normalizeDomain(domainName);
-          const domainKeys = await client.getDomainTsigKeys(cleanDomain);
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(
-                  {
-                    domain: cleanDomain,
-                    tsigKeys: domainKeys,
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
-          };
-        }
-
         const keys = await client.getTsigKeys();
         return {
           content: [
@@ -67,7 +42,40 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
     }
   );
 
-  // 2. Create TSIG Key
+  // 2. Get TSIG Key
+  server.tool(
+    'get_tsig_key',
+    'Get details for a specific TSIG key by name.',
+    {
+      keyName: z.string().describe('TSIG key name (e.g. key-12345)'),
+    },
+    async ({ keyName }) => {
+      try {
+        const key = await client.getTsigKey(keyName);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(key, null, 2),
+            },
+          ],
+        };
+      } catch (err: unknown) {
+        const error = err as Error;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error fetching TSIG key "${keyName}": ${error.message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 3. Create TSIG Key
   server.tool(
     'create_tsig_key',
     'Generate a new TSIG key for secondary DNS transfers (AXFR) or dynamic DNS updates.',
@@ -87,7 +95,7 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
     },
     async ({ algorithm }) => {
       try {
-        const key = await client.createTsigKey(algorithm);
+        const key = await client.createTsigKey(algorithm as TsigAlgorithm);
         return {
           content: [
             {
@@ -111,46 +119,13 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
     }
   );
 
-  // 3. Delete TSIG Key
-  server.tool(
-    'delete_tsig_key',
-    'Delete a TSIG key from the account.',
-    {
-      key: z.string().describe('The name or identifier of the TSIG key to delete'),
-    },
-    async ({ key }) => {
-      try {
-        await client.deleteTsigKey(key);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Successfully deleted TSIG key "${key}".`,
-            },
-          ],
-        };
-      } catch (err: unknown) {
-        const error = err as Error;
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Error deleting TSIG key "${key}": ${error.message}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
-  );
-
   // 4. Configure Domain TSIG
   server.tool(
     'configure_domain_tsig',
     'Attach and configure TSIG permissions (AXFR transfer / dynamic DNS updates) for a domain.',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
-      key: z.string().describe('TSIG key name'),
+      keyName: z.string().describe('TSIG key name'),
       allowAxfr: z
         .boolean()
         .describe('Whether to allow AXFR zone transfers for this domain using this key'),
@@ -158,18 +133,15 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
         .boolean()
         .describe('Whether to allow RFC 2136 DNS updates for this domain using this key'),
     },
-    async ({ domainName, key, allowAxfr, allowDnsUpdate }) => {
+    async ({ domainName, keyName, allowAxfr, allowDnsUpdate }) => {
       try {
         const cleanDomain = normalizeDomain(domainName);
-        await client.patchDomainTsig(cleanDomain, key, {
-          allowAxfr,
-          allowDnsUpdate,
-        });
+        await client.updateDomainTsig(cleanDomain, keyName, allowAxfr, allowDnsUpdate);
         return {
           content: [
             {
               type: 'text',
-              text: `Successfully updated TSIG settings for "${key}" on domain "${cleanDomain}". (allowAxfr: ${allowAxfr}, allowDnsUpdate: ${allowDnsUpdate})`,
+              text: `Successfully updated TSIG settings for "${keyName}" on domain "${cleanDomain}". (allowAxfr: ${allowAxfr}, allowDnsUpdate: ${allowDnsUpdate})`,
             },
           ],
         };
@@ -191,25 +163,19 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
   // 5. Remove Domain TSIG
   server.tool(
     'remove_domain_tsig',
-    'Remove a TSIG key or all TSIG keys from a domain.',
+    'Remove all TSIG keys associated with a domain.',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
-      key: z
-        .string()
-        .optional()
-        .describe(
-          'Specific TSIG key name to remove from this domain. If omitted, removes all TSIG keys from the domain.'
-        ),
     },
-    async ({ domainName, key }) => {
+    async ({ domainName }) => {
       try {
         const cleanDomain = normalizeDomain(domainName);
-        await client.deleteDomainTsig(cleanDomain, key);
+        await client.deleteDomainTsig(cleanDomain);
         return {
           content: [
             {
               type: 'text',
-              text: `Successfully removed ${key ? `TSIG key "${key}"` : 'all TSIG keys'} from domain "${cleanDomain}".`,
+              text: `Successfully removed all TSIG keys from domain "${cleanDomain}".`,
             },
           ],
         };
@@ -219,7 +185,7 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
           content: [
             {
               type: 'text',
-              text: `Error removing TSIG from domain "${domainName}": ${error.message}`,
+              text: `Error removing TSIG keys from domain "${domainName}": ${error.message}`,
             },
           ],
           isError: true,

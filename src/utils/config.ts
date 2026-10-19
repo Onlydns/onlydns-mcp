@@ -1,12 +1,15 @@
 import dotenv from 'dotenv';
-import { OnlyDNSConfig } from '../client/types.js';
+import type { OnlyDNSClientOptions } from '@onlydns/sdk';
 
 dotenv.config();
 
 const DEFAULT_BASE_URL = 'https://api.onlydns.com/v1';
 
-export function loadConfig(overrides?: Partial<OnlyDNSConfig>): OnlyDNSConfig {
+export function loadConfig(
+  overrides?: Partial<OnlyDNSClientOptions> & { token?: string }
+): OnlyDNSClientOptions {
   const token =
+    overrides?.apiToken ||
     overrides?.token ||
     process.env.ONLYDNS_API_TOKEN ||
     process.env.ONLYDNS_API_KEY ||
@@ -20,7 +23,9 @@ export function loadConfig(overrides?: Partial<OnlyDNSConfig>): OnlyDNSConfig {
     DEFAULT_BASE_URL;
 
   return {
-    token,
+    apiToken: token,
     baseUrl,
+    timeout: overrides?.timeout,
+    fetch: overrides?.fetch,
   };
 }

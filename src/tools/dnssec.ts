@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { OnlyDNSClient } from '../client/api.js';
+import { OnlyDNSClient } from '@onlydns/sdk';
 import { normalizeDomain } from '../utils/dns.js';
 
 export function registerDnssecTools(server: McpServer, client: OnlyDNSClient): void {
@@ -13,7 +13,7 @@ export function registerDnssecTools(server: McpServer, client: OnlyDNSClient): v
     async ({ domainName }) => {
       try {
         const cleanDomain = normalizeDomain(domainName);
-        const dnssec = await client.getDnssec(cleanDomain);
+        const dnssec = await client.getDnssecStatus(cleanDomain);
         return {
           content: [
             {
@@ -86,7 +86,7 @@ export function registerDnssecTools(server: McpServer, client: OnlyDNSClient): v
     async ({ domainName }) => {
       try {
         const cleanDomain = normalizeDomain(domainName);
-        await client.deleteDnssec(cleanDomain);
+        await client.disableDnssec(cleanDomain);
         return {
           content: [
             {

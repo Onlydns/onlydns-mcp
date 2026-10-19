@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { OnlyDNSClient } from '../client/api.js';
+import { OnlyDNSClient } from '@onlydns/sdk';
 import { normalizeDomain } from '../utils/dns.js';
 
 export function registerDomainTools(server: McpServer, client: OnlyDNSClient): void {
@@ -24,7 +24,7 @@ export function registerDomainTools(server: McpServer, client: OnlyDNSClient): v
     },
     async ({ limit, offset }) => {
       try {
-        const domains = await client.listDomains(limit, offset);
+        const domains = await client.listDomains({ limit, offset });
         return {
           content: [
             {

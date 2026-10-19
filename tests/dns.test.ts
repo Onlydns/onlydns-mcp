@@ -6,7 +6,7 @@ import {
   normalizeRecordType,
   filterRecords,
 } from '../src/utils/dns.js';
-import { DNSRecord } from '../src/client/types.js';
+import { DNSRecord } from '@onlydns/sdk';
 
 test('normalizeDomain cleans trailing dots and lowercases', () => {
   assert.equal(normalizeDomain('EXAMPLE.COM.'), 'example.com');

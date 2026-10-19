@@ -64,31 +64,31 @@ async function main(): Promise<void> {
   }
 
   if (parsed.showVersion) {
-    process.stdout.write('onlydns-mcp v1.0.0\n');
+    process.stdout.write('@onlydns/mcp v1.0.0\n');
     process.exit(0);
   }
 
   const config = loadConfig({
-    token: parsed.token,
+    apiToken: parsed.token,
     baseUrl: parsed.baseUrl,
   });
 
-  if (!config.token) {
+  if (!config.apiToken) {
     process.stderr.write(
-      '[onlydns-mcp] Warning: ONLYDNS_API_TOKEN is not set. Tools requiring authentication will return unauthorized errors until a valid token is provided.\n'
+      '[@onlydns/mcp] Warning: ONLYDNS_API_TOKEN is not set. Tools requiring authentication will return unauthorized errors until a valid token is provided.\n'
     );
   }
 
   const { server } = createOnlyDNSServer(config);
   const transport = new StdioServerTransport();
 
-  process.stderr.write(`[onlydns-mcp] Starting OnlyDNS MCP server (API: ${config.baseUrl})...\n`);
+  process.stderr.write(`[@onlydns/mcp] Starting OnlyDNS MCP server (API: ${config.baseUrl})...\n`);
 
   await server.connect(transport);
 }
 
 main().catch((err: unknown) => {
   const error = err as Error;
-  process.stderr.write(`[onlydns-mcp] Fatal error: ${error.message}\n`);
+  process.stderr.write(`[@onlydns/mcp] Fatal error: ${error.message}\n`);
   process.exit(1);
 });

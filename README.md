@@ -1,6 +1,6 @@
-# OnlyDNS MCP Server
+# OnlyDNS MCP Server (`@onlydns/mcp`)
 
-Model Context Protocol (MCP) server for [OnlyDNS](https://onlydns.com). Enables AI agents (such as Claude Desktop, Cursor, Junie, and Windsurf) to securely inspect and manage DNS zones, DNS records, DNSSEC configuration, and TSIG keys directly with your OnlyDNS account.
+Official Model Context Protocol (MCP) server for [OnlyDNS](https://onlydns.com), built on the official TypeScript SDK (`@onlydns/sdk`). Enables AI agents (such as Claude Desktop, Cursor, Junie, Windsurf, and Claude Code) to inspect and manage DNS zones, DNS records, DNSSEC configuration, and TSIG keys directly with your OnlyDNS account.
 
 ---
 
@@ -26,13 +26,13 @@ You can run the server directly using `npx`:
 
 ```bash
 export ONLYDNS_API_TOKEN="your_onlydns_api_token"
-npx onlydns-mcp
+npx -y @onlydns/mcp
 ```
 
 ### Global Installation
 
 ```bash
-npm install -g onlydns-mcp
+npm install -g @onlydns/mcp
 ```
 
 ---
@@ -65,7 +65,7 @@ Add the following to your `claude_desktop_config.json`:
   "mcpServers": {
     "onlydns": {
       "command": "npx",
-      "args": ["-y", "onlydns-mcp"],
+      "args": ["-y", "@onlydns/mcp"],
       "env": {
         "ONLYDNS_API_TOKEN": "YOUR_ONLYDNS_BEARER_TOKEN"
       }
@@ -85,7 +85,7 @@ Add to your MCP settings or `.cursor/mcp.json`:
   "mcpServers": {
     "onlydns": {
       "command": "npx",
-      "args": ["-y", "onlydns-mcp"],
+      "args": ["-y", "@onlydns/mcp"],
       "env": {
         "ONLYDNS_API_TOKEN": "YOUR_ONLYDNS_BEARER_TOKEN"
       }
@@ -115,11 +115,11 @@ Add to your MCP settings or `.cursor/mcp.json`:
 - `disable_dnssec(domainName)`: Disables DNSSEC signing.
 
 ### 🔑 TSIG Keys
-- `list_tsig_keys(domainName?)`: Lists account or domain-specific TSIG keys.
+- `list_tsig_keys()`: Lists all account TSIG keys.
+- `get_tsig_key(keyName)`: Retrieves TSIG key details.
 - `create_tsig_key(algorithm?)`: Generates a new TSIG key (`hmac-sha256`, `hmac-sha512`, etc.).
-- `delete_tsig_key(key)`: Deletes a TSIG key.
-- `configure_domain_tsig(domainName, key, allowAxfr, allowDnsUpdate)`: Configures AXFR or DDNS permissions.
-- `remove_domain_tsig(domainName, key?)`: Unlinks TSIG key(s) from a domain.
+- `configure_domain_tsig(domainName, keyName, allowAxfr, allowDnsUpdate)`: Configures AXFR or DDNS permissions for a domain.
+- `remove_domain_tsig(domainName)`: Removes all TSIG keys from a domain.
 
 ---
 
@@ -127,6 +127,7 @@ Add to your MCP settings or `.cursor/mcp.json`:
 
 ```bash
 # Clone and install dependencies
+git clone https://github.com/onlydns/onlydns-mcp.git
 cd onlydns-mcp
 npm install
 

@@ -1,4 +1,4 @@
-import { DNSRecord, RecordType } from '../client/types.js';
+import { DNSRecord, RecordType } from '@onlydns/sdk';
 
 export function normalizeDomain(domain: string): string {
   return domain.trim().toLowerCase().replace(/\.+$/, '');

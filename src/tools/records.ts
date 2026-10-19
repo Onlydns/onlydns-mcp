@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { OnlyDNSClient } from '../client/api.js';
-import { DNSRecord } from '../client/types.js';
+import { OnlyDNSClient, DNSRecord, RecordType } from '@onlydns/sdk';
 import {
   filterRecords,
   normalizeDomain,
@@ -105,35 +104,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
         const cleanType = normalizeRecordType(type);
         const newValues = Array.isArray(value) ? value : [value];
 
-        const existingRecords = await client.getRecords(cleanDomain);
-        let recordFound = false;
-
-        const updatedRecords: DNSRecord[] = existingRecords.map((rec) => {
-          if (
-            rec.name.toLowerCase().replace(/\.+$/, '') === cleanName.toLowerCase() &&
-            normalizeRecordType(rec.type) === cleanType
-          ) {
-            recordFound = true;
-            const mergedValues = Array.from(new Set([...rec.records, ...newValues]));
-            return {
-              ...rec,
-              ttl: ttl ?? rec.ttl,
-              records: mergedValues,
-            };
-          }
-          return rec;
-        });
-
-        if (!recordFound) {
-          updatedRecords.push({
-            name: cleanName,
-            type: cleanType,
-            ttl: ttl ?? 300,
-            records: newValues,
-          });
-        }
-
-        await client.replaceRecords(cleanDomain, updatedRecords);
+        await client.addRecord(cleanDomain, cleanName, cleanType as RecordType, newValues, ttl ?? 300);
 
         return {
           content: [
@@ -182,35 +153,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
         const cleanType = normalizeRecordType(type);
         const newValues = Array.isArray(value) ? value : [value];
 
-        const existingRecords = await client.getRecords(cleanDomain);
-        let recordFound = false;
-
-        const updatedRecords: DNSRecord[] = existingRecords.map((rec) => {
-          if (
-            rec.name.toLowerCase().replace(/\.+$/, '') === cleanName.toLowerCase() &&
-            normalizeRecordType(rec.type) === cleanType
-          ) {
-            recordFound = true;
-            return {
-              ...rec,
-              ttl: ttl ?? rec.ttl,
-              records: newValues,
-            };
-          }
-          return rec;
-        });
-
-        if (!recordFound) {
-          // If record didn't exist, create it
-          updatedRecords.push({
-            name: cleanName,
-            type: cleanType,
-            ttl: ttl ?? 300,
-            records: newValues,
-          });
-        }
-
-        await client.replaceRecords(cleanDomain, updatedRecords);
+        await client.updateRecord(cleanDomain, cleanName, cleanType as RecordType, newValues, ttl);
 
         return {
           content: [
@@ -256,46 +199,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
         const cleanName = normalizeRecordName(name, cleanDomain);
         const cleanType = normalizeRecordType(type);
 
-        const existingRecords = await client.getRecords(cleanDomain);
-        let matched = false;
-
-        const updatedRecords: DNSRecord[] = [];
-
-        for (const rec of existingRecords) {
-          const isTarget =
-            rec.name.toLowerCase().replace(/\.+$/, '') === cleanName.toLowerCase() &&
-            normalizeRecordType(rec.type) === cleanType;
-
-          if (isTarget) {
-            matched = true;
-            if (value !== undefined) {
-              // Delete only specific value
-              const remainingValues = rec.records.filter((v) => v !== value);
-              if (remainingValues.length > 0) {
-                updatedRecords.push({
-                  ...rec,
-                  records: remainingValues,
-                });
-              }
-            }
-            // If value is omitted, omit this whole record
-          } else {
-            updatedRecords.push(rec);
-          }
-        }
-
-        if (!matched) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No matching ${cleanType} record found for "${cleanName}" in domain "${cleanDomain}". No changes were made.`,
-              },
-            ],
-          };
-        }
-
-        await client.replaceRecords(cleanDomain, updatedRecords);
+        await client.removeRecord(cleanDomain, cleanName, cleanType as RecordType, value);
 
         return {
           content: [
@@ -320,22 +224,25 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
     }
   );
 
-  // 5. Set Records (Batch Replace)
+  // 5. Replace All Records (Bulk)
   server.tool(
     'set_records',
-    'Batch replace all DNS records for a domain in OnlyDNS.',
+    'Completely replace ALL DNS records in a zone with a new list of records. Warning: destructive if omitted records are intended to be preserved.',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
       records: z
         .array(
           z.object({
-            name: z.string().describe('Hostname / record name (e.g. "@", "www.example.com")'),
-            type: z.string().describe('Record type (e.g. A, AAAA, CNAME, MX, TXT)'),
-            ttl: z.number().min(1).describe('TTL in seconds'),
-            records: z.array(z.string()).describe('List of record values'),
+            name: z.string().describe('Record name or subdomain (e.g. "@", "www")'),
+            type: z.string().describe('Record type (e.g. "A", "CNAME", "TXT")'),
+            ttl: z.number().min(1).default(300).describe('TTL in seconds'),
+            records: z
+              .array(z.string())
+              .min(1)
+              .describe('List of record values (e.g. ["1.2.3.4"])'),
           })
         )
-        .describe('Full list of DNS records to set for this domain'),
+        .describe('Complete list of replacement DNS records'),
     },
     async ({ domainName, records }) => {
       try {
@@ -353,7 +260,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
           content: [
             {
               type: 'text',
-              text: `Successfully replaced all DNS records for "${cleanDomain}". (Total records configured: ${formattedRecords.length})`,
+              text: `Successfully replaced all DNS records for "${cleanDomain}". Total record entries: ${formattedRecords.length}.`,
             },
           ],
         };
@@ -363,7 +270,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
           content: [
             {
               type: 'text',
-              text: `Error setting records for "${domainName}": ${error.message}`,
+              text: `Error replacing records for "${domainName}": ${error.message}`,
             },
           ],
           isError: true,

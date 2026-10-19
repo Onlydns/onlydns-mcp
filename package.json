@@ -1,19 +1,32 @@
 {
-  "name": "onlydns-mcp",
+  "name": "@onlydns/mcp",
   "version": "1.0.0",
   "description": "Model Context Protocol (MCP) server for OnlyDNS - manage DNS zones, records, DNSSEC, and TSIG keys.",
+  "author": "OnlyDNS <support@onlydns.com>",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onlydns/onlydns-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/onlydns/onlydns-mcp/issues"
+  },
+  "homepage": "https://github.com/onlydns/onlydns-mcp#readme",
   "bin": {
-    "onlydns-mcp": "dist/index.js"
+    "onlydns-mcp": "dist/index.js",
+    "@onlydns/mcp": "dist/index.js"
   },
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -33,6 +46,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
+    "@onlydns/sdk": "^1.0.0",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2"
   },
