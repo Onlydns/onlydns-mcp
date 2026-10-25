@@ -23,7 +23,7 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
         .string()
         .optional()
         .describe(
-          'Filter by record name/hostname (e.g. "www", "sub.example.com", or "@" for root)'
+          'Filter by record name/hostname. Accepts relative subdomain (e.g. "testing", "@", "www"), domain-qualified name (e.g. "testing.example.com"), or full canonical FQDN (e.g. "testing.example.com.").'
         ),
     },
     async ({ domainName, type, name }) => {
@@ -74,12 +74,14 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
   // 2. Add Record
   server.tool(
     'add_record',
-    'Add a DNS record to a domain. If a record with the same name and type already exists, the new value is appended to the record set.',
+    'Add a DNS record to a domain. Accepts relative hostnames (e.g. "testing"), domain-qualified names (e.g. "testing.example.com"), or canonical FQDNs (e.g. "testing.example.com."). If a record with the same name and type already exists, the new value is appended to the record set.',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
       name: z
         .string()
-        .describe('Record name/subdomain (e.g. "@", "www", "mail", or "app.example.com")'),
+        .describe(
+          'Record name/subdomain. Accepts relative name (e.g. "testing", "www", "@"), domain-qualified name (e.g. "testing.example.com"), or full canonical FQDN (e.g. "testing.example.com."). Canonicalization is handled automatically.'
+        ),
       type: z
         .string()
         .describe(
@@ -132,10 +134,14 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
   // 3. Update Record
   server.tool(
     'update_record',
-    'Update an existing DNS record set for a given name and type, completely replacing its values and/or TTL.',
+    'Update an existing DNS record set for a given name and type, completely replacing its values and/or TTL. Accepts relative names (e.g. "testing"), domain-qualified names (e.g. "testing.example.com"), or canonical FQDNs (e.g. "testing.example.com.").',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
-      name: z.string().describe('Record name/subdomain to update (e.g. "@", "www")'),
+      name: z
+        .string()
+        .describe(
+          'Record name/subdomain to update. Accepts relative name (e.g. "testing", "www", "@"), domain-qualified name (e.g. "testing.example.com"), or full canonical FQDN (e.g. "testing.example.com."). Canonicalization is handled automatically.'
+        ),
       type: z.string().describe('DNS record type to update (e.g. A, CNAME, TXT)'),
       value: z
         .union([z.string(), z.array(z.string())])
@@ -181,10 +187,14 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
   // 4. Delete Record
   server.tool(
     'delete_record',
-    'Delete a DNS record or specific value from a domain.',
+    'Delete a DNS record or specific value from a domain. Accepts relative names (e.g. "testing"), domain-qualified names (e.g. "testing.example.com"), or canonical FQDNs (e.g. "testing.example.com.").',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
-      name: z.string().describe('Record name/subdomain to delete (e.g. "@", "www")'),
+      name: z
+        .string()
+        .describe(
+          'Record name/subdomain to delete. Accepts relative name (e.g. "testing", "www", "@"), domain-qualified name (e.g. "testing.example.com"), or full canonical FQDN (e.g. "testing.example.com."). Canonicalization is handled automatically.'
+        ),
       type: z.string().describe('Record type to delete (e.g. A, CNAME, TXT)'),
       value: z
         .string()
@@ -233,7 +243,11 @@ export function registerRecordTools(server: McpServer, client: OnlyDNSClient): v
       records: z
         .array(
           z.object({
-            name: z.string().describe('Record name or subdomain (e.g. "@", "www")'),
+            name: z
+              .string()
+              .describe(
+                'Record name/subdomain. Accepts relative name (e.g. "testing", "www", "@"), domain-qualified name (e.g. "testing.example.com"), or full canonical FQDN (e.g. "testing.example.com."). Canonicalization is handled automatically.'
+              ),
             type: z.string().describe('Record type (e.g. "A", "CNAME", "TXT")'),
             ttl: z.number().min(1).default(300).describe('TTL in seconds'),
             records: z

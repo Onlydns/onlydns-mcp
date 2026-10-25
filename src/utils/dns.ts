@@ -1,30 +1,12 @@
-import { DNSRecord, RecordType } from '@onlydns/sdk';
+import {
+  DNSRecord,
+  RecordType,
+  normalizeDomain,
+  normalizeRecordName,
+  normalizeRecordType,
+} from '@onlydns/sdk';
 
-export function normalizeDomain(domain: string): string {
-  return domain.trim().toLowerCase().replace(/\.+$/, '');
-}
-
-export function normalizeRecordName(name: string, domainName: string): string {
-  const cleanDomain = normalizeDomain(domainName);
-  let trimmedName = name.trim().toLowerCase();
-
-  // Strip trailing dot
-  trimmedName = trimmedName.replace(/\.+$/, '');
-
-  if (trimmedName === '' || trimmedName === '@') {
-    return cleanDomain;
-  }
-
-  if (trimmedName === cleanDomain || trimmedName.endsWith(`.${cleanDomain}`)) {
-    return trimmedName;
-  }
-
-  return `${trimmedName}.${cleanDomain}`;
-}
-
-export function normalizeRecordType(type: string): RecordType {
-  return type.trim().toUpperCase() as RecordType;
-}
+export { normalizeDomain, normalizeRecordName, normalizeRecordType };
 
 export function filterRecords(
   records: DNSRecord[],
@@ -38,12 +20,19 @@ export function filterRecords(
   }
 
   if (options?.name) {
-    const targetName = options.domainName
-      ? normalizeRecordName(options.name, options.domainName)
-      : options.name.trim().toLowerCase().replace(/\.+$/, '');
-    filtered = filtered.filter(
-      (r) => r.name.toLowerCase().replace(/\.+$/, '') === targetName
-    );
+    const cleanDomain = options.domainName ? normalizeDomain(options.domainName) : undefined;
+    const targetFqdn = cleanDomain
+      ? normalizeRecordName(options.name, cleanDomain)
+      : (options.name.trim().toLowerCase().replace(/^\.+/, '').replace(/\.+$/, '') + '.');
+    const targetClean = targetFqdn.replace(/\.+$/, '');
+
+    filtered = filtered.filter((r) => {
+      const rFqdn = cleanDomain
+        ? normalizeRecordName(r.name, cleanDomain)
+        : (r.name.trim().toLowerCase().replace(/^\.+/, '').replace(/\.+$/, '') + '.');
+      const rClean = r.name.trim().toLowerCase().replace(/^\.+/, '').replace(/\.+$/, '');
+      return rFqdn === targetFqdn || rClean === targetClean;
+    });
   }
 
   return filtered;

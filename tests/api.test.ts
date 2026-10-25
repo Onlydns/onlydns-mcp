@@ -105,7 +105,7 @@ test('OnlyDNSClient.replaceRecords calls PUT /dns/{domain}/records', async () =>
   assert.equal(capturedUrl, 'https://api.onlydns.com/v1/dns/example.com/records');
   assert.equal(capturedMethod, 'PUT');
   assert.deepEqual(JSON.parse(capturedBody), [
-    { name: 'example.com', type: 'A', ttl: 300, records: ['1.2.3.4'] },
+    { name: 'example.com.', type: 'A', ttl: 300, records: ['1.2.3.4'] },
   ]);
 });
 

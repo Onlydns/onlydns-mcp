@@ -13,12 +13,25 @@ test('normalizeDomain cleans trailing dots and lowercases', () => {
   assert.equal(normalizeDomain('  Sub.Example.Com  '), 'sub.example.com');
 });
 
-test('normalizeRecordName handles @, relative, and FQDN hosts', () => {
-  assert.equal(normalizeRecordName('@', 'example.com'), 'example.com');
-  assert.equal(normalizeRecordName('', 'example.com'), 'example.com');
-  assert.equal(normalizeRecordName('www', 'example.com'), 'www.example.com');
-  assert.equal(normalizeRecordName('api.example.com', 'example.com'), 'api.example.com');
-  assert.equal(normalizeRecordName('mail.example.com.', 'example.com'), 'mail.example.com');
+test('normalizeRecordName handles @, relative, domain-qualified, and canonical FQDN hosts consistently', () => {
+  // Case 1: Without domain (relative)
+  assert.equal(normalizeRecordName('testing', 'example.com'), 'testing.example.com.');
+  assert.equal(normalizeRecordName('www', 'example.com'), 'www.example.com.');
+  assert.equal(normalizeRecordName('@', 'example.com'), 'example.com.');
+  assert.equal(normalizeRecordName('', 'example.com'), 'example.com.');
+  assert.equal(normalizeRecordName('sub.dev', 'example.com'), 'sub.dev.example.com.');
+
+  // Case 2: With domain but without trailing dot
+  assert.equal(normalizeRecordName('testing.example.com', 'example.com'), 'testing.example.com.');
+  assert.equal(normalizeRecordName('example.com', 'example.com'), 'example.com.');
+  assert.equal(normalizeRecordName('www.example.com', 'example.com'), 'www.example.com.');
+  assert.equal(normalizeRecordName('sub.dev.example.com', 'example.com'), 'sub.dev.example.com.');
+
+  // Case 3: Full canonical FQDN with trailing dot
+  assert.equal(normalizeRecordName('testing.example.com.', 'example.com'), 'testing.example.com.');
+  assert.equal(normalizeRecordName('example.com.', 'example.com'), 'example.com.');
+  assert.equal(normalizeRecordName('www.example.com.', 'example.com'), 'www.example.com.');
+  assert.equal(normalizeRecordName('sub.dev.example.com.', 'example.com'), 'sub.dev.example.com.');
 });
 
 test('normalizeRecordType converts to uppercase', () => {

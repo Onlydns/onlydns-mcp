@@ -39,12 +39,39 @@ test('Record manipulation - add, update, delete flow', async () => {
   assert.equal(records2.length, 3);
   const mx = records2.find((r) => r.type === 'MX');
   assert.ok(mx);
+  assert.equal(mx.name, 'example.com.');
   assert.deepEqual(mx.records, ['10 mail.example.com.']);
 
-  // 3. Delete CNAME record using SDK removeRecord helper
-  await client.removeRecord('example.com', 'www.example.com', 'CNAME');
+  // All records sent over PUT must have trailing dots
+  for (const r of inMemoryRecords) {
+    assert.ok(r.name.endsWith('.'), `Record name "${r.name}" must end with a trailing dot`);
+  }
+
+  // 3. Delete CNAME record using SDK removeRecord helper with relative name
+  await client.removeRecord('example.com', 'www', 'CNAME');
 
   const records3 = await client.getRecords('example.com');
   assert.equal(records3.length, 2);
   assert.equal(records3.find((r) => r.type === 'CNAME'), undefined);
+
+  // 4. Test 3 ways of adding and updating records (relative, domain-qualified without trailing dot, full canonical FQDN)
+  // Way 1: Relative name "testing"
+  await client.addRecord('example.com', 'testing', 'A', '1.2.3.4', 300);
+  let recs = await client.getRecords('example.com');
+  let testingRec = recs.find((r) => r.name === 'testing.example.com.');
+  assert.ok(testingRec);
+  assert.deepEqual(testingRec.records, ['1.2.3.4']);
+
+  // Way 2: Domain-qualified name without trailing period "testing.example.com"
+  await client.updateRecord('example.com', 'testing.example.com', 'A', ['5.6.7.8'], 600);
+  recs = await client.getRecords('example.com');
+  testingRec = recs.find((r) => r.name === 'testing.example.com.');
+  assert.ok(testingRec);
+  assert.deepEqual(testingRec.records, ['5.6.7.8']);
+  assert.equal(testingRec.ttl, 600);
+
+  // Way 3: Full canonical FQDN with trailing period "testing.example.com."
+  await client.removeRecord('example.com', 'testing.example.com.', 'A');
+  recs = await client.getRecords('example.com');
+  assert.equal(recs.find((r) => r.name === 'testing.example.com.'), undefined);
 });
