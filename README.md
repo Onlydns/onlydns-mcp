@@ -118,7 +118,8 @@ Add to your MCP settings or `.cursor/mcp.json`:
 - `list_tsig_keys()`: Lists all account TSIG keys.
 - `get_tsig_key(keyName)`: Retrieves TSIG key details.
 - `create_tsig_key(algorithm?)`: Generates a new TSIG key (`hmac-sha256`, `hmac-sha512`, etc.).
-- `configure_domain_tsig(domainName, keyName, allowAxfr, allowDnsUpdate)`: Configures AXFR or DDNS permissions for a domain.
+- `get_domain_tsig(domainName)`: Retrieves TSIG keys and permissions configured on a domain.
+- `configure_domain_tsig(domainName, keyName, allowAxfr, allowDnsUpdate, subdomains?)`: Configures AXFR, DDNS, and optional subdomain restriction permissions for a domain.
 - `remove_domain_tsig(domainName)`: Removes all TSIG keys from a domain.
 
 ---

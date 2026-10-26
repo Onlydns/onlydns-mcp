@@ -119,10 +119,51 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
     }
   );
 
-  // 4. Configure Domain TSIG
+  // 4. Get Domain TSIG
+  server.tool(
+    'get_domain_tsig',
+    'Get TSIG keys and permissions (AXFR transfers, dynamic DNS updates, subdomain restrictions) configured for a domain.',
+    {
+      domainName: z.string().describe('Domain name (e.g. example.com)'),
+    },
+    async ({ domainName }) => {
+      try {
+        const cleanDomain = normalizeDomain(domainName);
+        const tsigPerms = await client.getDomainTsig(cleanDomain);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  domain: cleanDomain,
+                  tsigKeys: tsigPerms,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (err: unknown) {
+        const error = err as Error;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error getting TSIG settings for domain "${domainName}": ${error.message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 5. Configure Domain TSIG
   server.tool(
     'configure_domain_tsig',
-    'Attach and configure TSIG permissions (AXFR transfer / dynamic DNS updates) for a domain.',
+    'Attach and configure TSIG permissions (AXFR transfer / dynamic DNS updates / subdomain restrictions) for a domain.',
     {
       domainName: z.string().describe('Domain name (e.g. example.com)'),
       keyName: z.string().describe('TSIG key name'),
@@ -132,16 +173,32 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
       allowDnsUpdate: z
         .boolean()
         .describe('Whether to allow RFC 2136 DNS updates for this domain using this key'),
+      subdomains: z
+        .array(z.string())
+        .optional()
+        .describe(
+          'Optional list of allowed subdomains (e.g. ["_acme_challenge"]). If specified, dynamic DNS updates are restricted to these subdomains.'
+        ),
     },
-    async ({ domainName, keyName, allowAxfr, allowDnsUpdate }) => {
+    async ({ domainName, keyName, allowAxfr, allowDnsUpdate, subdomains }) => {
       try {
         const cleanDomain = normalizeDomain(domainName);
-        await client.updateDomainTsig(cleanDomain, keyName, allowAxfr, allowDnsUpdate);
+        await client.updateDomainTsig(
+          cleanDomain,
+          keyName,
+          allowAxfr,
+          allowDnsUpdate,
+          subdomains
+        );
+        const subMsg =
+          subdomains && subdomains.length > 0
+            ? `, subdomains: [${subdomains.join(', ')}]`
+            : '';
         return {
           content: [
             {
               type: 'text',
-              text: `Successfully updated TSIG settings for "${keyName}" on domain "${cleanDomain}". (allowAxfr: ${allowAxfr}, allowDnsUpdate: ${allowDnsUpdate})`,
+              text: `Successfully updated TSIG settings for "${keyName}" on domain "${cleanDomain}". (allowAxfr: ${allowAxfr}, allowDnsUpdate: ${allowDnsUpdate}${subMsg})`,
             },
           ],
         };
@@ -160,7 +217,7 @@ export function registerTsigTools(server: McpServer, client: OnlyDNSClient): voi
     }
   );
 
-  // 5. Remove Domain TSIG
+  // 6. Remove Domain TSIG
   server.tool(
     'remove_domain_tsig',
     'Remove all TSIG keys associated with a domain.',

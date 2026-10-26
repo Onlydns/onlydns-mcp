@@ -188,6 +188,71 @@ test('OnlyDNSClient translates API error responses', async () => {
   );
 });
 
+test('OnlyDNSClient.getDomainTsig calls GET /dns/{domain}/tsig', async () => {
+  let capturedUrl = '';
+
+  const mockFetch: typeof fetch = async (input) => {
+    capturedUrl = String(input);
+    return new Response(
+      JSON.stringify({
+        'key-123': {
+          allowAxfr: false,
+          allowDnsUpdate: true,
+          subdomains: ['_acme_challenge'],
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  };
+
+  const client = new OnlyDNSClient({
+    apiToken: 'test-token',
+    baseUrl: 'https://api.onlydns.com/v1',
+    fetch: mockFetch,
+  });
+
+  const tsig = await client.getDomainTsig('example.com');
+  assert.equal(capturedUrl, 'https://api.onlydns.com/v1/dns/example.com/tsig');
+  assert.deepEqual(tsig, {
+    'key-123': {
+      allowAxfr: false,
+      allowDnsUpdate: true,
+      subdomains: ['_acme_challenge'],
+    },
+  });
+});
+
+test('OnlyDNSClient.updateDomainTsig calls PATCH /dns/{domain}/tsig/{key} with subdomains', async () => {
+  let capturedUrl = '';
+  let capturedMethod = '';
+  let capturedBody = '';
+
+  const mockFetch: typeof fetch = async (input, init) => {
+    capturedUrl = String(input);
+    capturedMethod = init?.method || '';
+    capturedBody = String(init?.body || '');
+    return new Response(null, { status: 204 });
+  };
+
+  const client = new OnlyDNSClient({
+    apiToken: 'test-token',
+    baseUrl: 'https://api.onlydns.com/v1',
+    fetch: mockFetch,
+  });
+
+  await client.updateDomainTsig('example.com', 'key-test', false, true, ['_acme_challenge', 'dev']);
+  assert.equal(capturedUrl, 'https://api.onlydns.com/v1/dns/example.com/tsig/key-test');
+  assert.equal(capturedMethod, 'PATCH');
+  assert.deepEqual(JSON.parse(capturedBody), {
+    allowAxfr: false,
+    allowDnsUpdate: true,
+    subdomains: ['_acme_challenge', 'dev'],
+  });
+});
+
 test('createOnlyDNSServer initializes McpServer with tools', () => {
   const { server, client } = createOnlyDNSServer({
     apiToken: 'test-token',
