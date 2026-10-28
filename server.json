@@ -1,0 +1,39 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.onlydns/onlydns-mcp",
+  "title": "OnlyDNS MCP Server",
+  "description": "Model Context Protocol server for OnlyDNS to manage DNS zones, records, DNSSEC, and TSIG keys.",
+  "version": "1.0.3",
+  "websiteUrl": "https://onlydns.com",
+  "repository": {
+    "url": "https://github.com/onlydns/onlydns-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@onlydns/mcp",
+      "version": "1.0.3",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ONLYDNS_API_TOKEN",
+          "description": "OnlyDNS API Bearer token for authentication",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ONLYDNS_API_BASE_URL",
+          "description": "Custom API base URL (defaults to https://api.onlydns.com/v1)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string",
+          "default": "https://api.onlydns.com/v1"
+        }
+      ]
+    }
+  ]
+}

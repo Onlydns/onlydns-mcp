@@ -1,6 +1,7 @@
 {
   "name": "@onlydns/mcp",
   "version": "1.0.3",
+  "mcpName": "io.github.onlydns/onlydns-mcp",
   "description": "Model Context Protocol (MCP) server for OnlyDNS - manage DNS zones, records, DNSSEC, and TSIG keys.",
   "author": "OnlyDNS <support@onlydns.com>",
   "license": "MIT",
@@ -22,7 +23,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "server.json"
   ],
   "publishConfig": {
     "access": "public"
