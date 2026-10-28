@@ -128,7 +128,7 @@ Add to your MCP settings or `.cursor/mcp.json`:
 
 ```bash
 # Clone and install dependencies
-git clone https://github.com/onlydns/onlydns-mcp.git
+git clone https://github.com/Onlydns/onlydns-mcp.git
 cd onlydns-mcp
 npm install
 

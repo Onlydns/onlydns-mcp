@@ -6,7 +6,7 @@
   "version": "1.0.4",
   "websiteUrl": "https://onlydns.com",
   "repository": {
-    "url": "https://github.com/onlydns/onlydns-mcp",
+    "url": "https://github.com/Onlydns/onlydns-mcp",
     "source": "github"
   },
   "packages": [

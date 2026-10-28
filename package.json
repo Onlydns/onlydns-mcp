@@ -10,12 +10,12 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/onlydns/onlydns-mcp.git"
+    "url": "https://github.com/Onlydns/onlydns-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/onlydns/onlydns-mcp/issues"
+    "url": "https://github.com/Onlydns/onlydns-mcp/issues"
   },
-  "homepage": "https://github.com/onlydns/onlydns-mcp#readme",
+  "homepage": "https://github.com/Onlydns/onlydns-mcp#readme",
   "bin": {
     "onlydns-mcp": "dist/index.js",
     "@onlydns/mcp": "dist/index.js"
