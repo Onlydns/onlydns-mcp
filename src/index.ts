@@ -64,7 +64,7 @@ async function main(): Promise<void> {
   }
 
   if (parsed.showVersion) {
-    process.stdout.write('@onlydns/mcp v1.0.4\n');
+    process.stdout.write('@onlydns/mcp v1.0.5\n');
     process.exit(0);
   }
 
