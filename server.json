@@ -3,7 +3,7 @@
   "name": "io.github.onlydns/onlydns-mcp",
   "title": "OnlyDNS MCP Server",
   "description": "Model Context Protocol server for OnlyDNS to manage DNS zones, records, DNSSEC, and TSIG keys.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "websiteUrl": "https://onlydns.com",
   "repository": {
     "url": "https://github.com/onlydns/onlydns-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@onlydns/mcp",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "transport": {
         "type": "stdio"
       },
