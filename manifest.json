@@ -1,0 +1,119 @@
+{
+  "manifest_version": "0.3",
+  "name": "onlydns-mcp",
+  "display_name": "OnlyDNS MCP Server",
+  "version": "1.0.5",
+  "description": "Model Context Protocol server for OnlyDNS to manage DNS zones, records, DNSSEC, and TSIG keys.",
+  "author": {
+    "name": "OnlyDNS",
+    "email": "support@onlydns.com",
+    "url": "https://onlydns.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Onlydns/onlydns-mcp"
+  },
+  "homepage": "https://onlydns.com",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "ONLYDNS_API_TOKEN": "${user_config.api_token}",
+        "ONLYDNS_API_BASE_URL": "${user_config.api_base_url}"
+      }
+    }
+  },
+  "user_config": {
+    "api_token": {
+      "type": "string",
+      "title": "OnlyDNS API Token",
+      "description": "Your OnlyDNS API Bearer Token for managing DNS zones and records",
+      "required": true,
+      "sensitive": true
+    },
+    "api_base_url": {
+      "type": "string",
+      "title": "API Base URL",
+      "description": "Optional base URL override for the OnlyDNS API",
+      "required": false,
+      "default": "https://api.onlydns.com/v1"
+    }
+  },
+  "tools": [
+    {
+      "name": "list_domains",
+      "description": "List all DNS domains in your OnlyDNS account"
+    },
+    {
+      "name": "create_domain",
+      "description": "Create a new DNS domain zone in OnlyDNS"
+    },
+    {
+      "name": "list_records",
+      "description": "Get all DNS records for a domain with optional name and type filters"
+    },
+    {
+      "name": "add_record",
+      "description": "Add a new DNS record to a domain"
+    },
+    {
+      "name": "update_record",
+      "description": "Update an existing DNS record in a domain"
+    },
+    {
+      "name": "delete_record",
+      "description": "Delete a DNS record from a domain"
+    },
+    {
+      "name": "set_records",
+      "description": "Bulk set or replace all DNS records for a domain"
+    },
+    {
+      "name": "get_dnssec",
+      "description": "Get DNSSEC status and DS/DNSKEY records for a domain"
+    },
+    {
+      "name": "enable_dnssec",
+      "description": "Enable DNSSEC signing for a domain"
+    },
+    {
+      "name": "disable_dnssec",
+      "description": "Disable DNSSEC signing for a domain"
+    },
+    {
+      "name": "list_tsig_keys",
+      "description": "List all TSIG keys in your OnlyDNS account"
+    },
+    {
+      "name": "create_tsig_key",
+      "description": "Create a new TSIG key for AXFR zone transfers"
+    },
+    {
+      "name": "delete_tsig_key",
+      "description": "Delete a TSIG key by name"
+    },
+    {
+      "name": "configure_domain_tsig",
+      "description": "Configure or attach TSIG keys to a domain for AXFR access"
+    },
+    {
+      "name": "remove_domain_tsig",
+      "description": "Remove all TSIG key configurations from a domain"
+    }
+  ],
+  "keywords": [
+    "mcp",
+    "onlydns",
+    "dns",
+    "dns-management",
+    "dnssec",
+    "tsig"
+  ],
+  "license": "MIT"
+}

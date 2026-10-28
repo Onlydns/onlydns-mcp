@@ -34,16 +34,23 @@ jobs:
       - name: Build MCP Server
         run: npm run build
 
+      - name: Build MCPB Bundle
+        run: |
+          npx @anthropic-ai/mcpb validate manifest.json
+          npx @anthropic-ai/mcpb pack . onlydns-mcp.mcpb
+
       - name: Run tests
         run: npm test
 
-      - name: Create GitHub Release
+      - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           generate_release_notes: true
           draft: false
           prerelease: false
+          files: |
+            onlydns-mcp.mcpb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -106,16 +113,33 @@ jobs:
       - name: Authenticate to MCP Registry (OIDC)
         run: mcp-publisher login github-oidc
 
-      - name: Publish to MCP Registry (with Retry)
+      - name: Publish to MCP Registry (Idempotent with Retry)
         run: |
-          MAX_RETRIES=5
-          COUNT=0
-          until mcp-publisher publish; do
-            COUNT=$((COUNT + 1))
-            if [ $COUNT -ge $MAX_RETRIES ]; then
-              echo "MCP Registry publication failed after $MAX_RETRIES attempts."
-              exit 1
-            fi
-            echo "Publication failed, retrying in 10s (attempt $COUNT/$MAX_RETRIES)..."
-            sleep 10
-          done
+          SERVER_NAME=$(node -p "require('./server.json').name")
+          SERVER_VERSION=$(node -p "require('./server.json').version")
+          ENCODED_SERVER_NAME=$(node -p "encodeURIComponent('${SERVER_NAME}')")
+
+          echo "Checking if ${SERVER_NAME}@${SERVER_VERSION} is already published on MCP Registry..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.modelcontextprotocol.io/v0.1/servers/${ENCODED_SERVER_NAME}/versions/${SERVER_VERSION}")
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "Server ${SERVER_NAME}@${SERVER_VERSION} is already published on MCP Registry (HTTP 200). Skipping publish step."
+          else
+            echo "Publishing ${SERVER_NAME}@${SERVER_VERSION} to MCP Registry..."
+            MAX_RETRIES=5
+            COUNT=0
+            until mcp-publisher publish; do
+              COUNT=$((COUNT + 1))
+              if [ $COUNT -ge $MAX_RETRIES ]; then
+                FINAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.modelcontextprotocol.io/v0.1/servers/${ENCODED_SERVER_NAME}/versions/${SERVER_VERSION}")
+                if [ "$FINAL_STATUS" = "200" ]; then
+                  echo "Server verified published on registry despite transient CLI response."
+                  break
+                fi
+                echo "MCP Registry publication failed after $MAX_RETRIES attempts."
+                exit 1
+              fi
+              echo "Publication failed, retrying in 10s (attempt $COUNT/$MAX_RETRIES)..."
+              sleep 10
+            done
+          fi

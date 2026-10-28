@@ -20,7 +20,11 @@ Official Model Context Protocol (MCP) server for [OnlyDNS](https://www.onlydns.c
 
 ## Installation & Quick Start
 
-### Using `npx` (No installation needed)
+### 1. One-Click Desktop Installation (MCPB Bundle)
+
+Download `onlydns-mcp.mcpb` directly from the [GitHub Releases](https://github.com/Onlydns/onlydns-mcp/releases) page. Compatible desktop clients (such as Claude Desktop) allow one-click installation and configure your `ONLYDNS_API_TOKEN` through a secure settings dialog.
+
+### 2. Using `npx` (No installation needed)
 
 You can run the server directly using `npx`:
 
@@ -29,7 +33,7 @@ export ONLYDNS_API_TOKEN="your_onlydns_api_token"
 npx -y @onlydns/mcp
 ```
 
-### Global Installation
+### 3. Global Installation
 
 ```bash
 npm install -g @onlydns/mcp

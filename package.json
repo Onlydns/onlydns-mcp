@@ -24,13 +24,16 @@
     "dist",
     "README.md",
     "LICENSE",
-    "server.json"
+    "server.json",
+    "manifest.json",
+    "icon.png"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "tsc",
+    "pack:mcpb": "mcpb validate manifest.json && mcpb pack . onlydns-mcp.mcpb",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "tsx --test tests/*.test.ts",
