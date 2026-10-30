@@ -1,6 +1,6 @@
 {
   "name": "@onlydns/mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "mcpName": "io.github.Onlydns/onlydns-mcp",
   "description": "Model Context Protocol (MCP) server for OnlyDNS - manage DNS zones, records, DNSSEC, and TSIG keys.",
   "author": "OnlyDNS <support@onlydns.com>",
@@ -51,7 +51,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
-    "@onlydns/sdk": "^1.0.4",
+    "@onlydns/sdk": "^1.0.5",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2"
   },

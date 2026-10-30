@@ -12,8 +12,6 @@ export function loadConfig(
     overrides?.apiToken ||
     overrides?.token ||
     process.env.ONLYDNS_API_TOKEN ||
-    process.env.ONLYDNS_API_KEY ||
-    process.env.ONLYDNS_AUTH_TOKEN ||
     '';
 
   const baseUrl =

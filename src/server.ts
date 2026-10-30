@@ -10,7 +10,7 @@ export function createOnlyDNSServer(
 ): { server: McpServer; client: OnlyDNSClient } {
   const server = new McpServer({
     name: '@onlydns/mcp',
-    version: '1.0.5',
+    version: '1.0.6',
   });
 
   const client = new OnlyDNSClient(options);
