@@ -262,3 +262,119 @@ test('createOnlyDNSServer initializes McpServer with tools', () => {
   assert.ok(server);
   assert.ok(client);
 });
+
+test('OnlyDNSClient account and OIDC methods call appropriate endpoints', async () => {
+  const calls: { url: string; method: string; body?: unknown } = { url: '', method: '' };
+
+  const mockFetch: typeof fetch = async (input, init) => {
+    calls.url = String(input);
+    calls.method = init?.method || 'GET';
+    calls.body = init?.body ? JSON.parse(String(init.body)) : undefined;
+
+    if (calls.url.endsWith('/account') && calls.method === 'GET') {
+      return new Response(
+        JSON.stringify({
+          accountId: '018f1234-5678-7000-8000-000000000001',
+          companyName: 'Acme Corporation',
+          package: {
+            id: 'pkg-1',
+            description: 'Enterprise Tier',
+            amount: 49.99,
+            features: {
+              domains: 50,
+              records: 5000,
+              queries: 1000000,
+              dnssec: true,
+              tsig: true,
+              proxy: true,
+              customSSO: true,
+            },
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (calls.url.endsWith('/account/oidc') && calls.method === 'GET') {
+      return new Response(
+        JSON.stringify({
+          configured: true,
+          discoveryUrl: 'https://idp.example.com/.well-known/openid-configuration',
+          clientId: 'client-123',
+          enforceSso: true,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (calls.url.endsWith('/account/oidc') && calls.method === 'POST') {
+      return new Response(
+        JSON.stringify({
+          configured: true,
+          discoveryUrl: (calls.body as { discoveryUrl?: string })?.discoveryUrl,
+          clientId: (calls.body as { clientId?: string })?.clientId,
+          enforceSso: (calls.body as { enforceSso?: boolean })?.enforceSso,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (calls.url.endsWith('/account/oidc') && calls.method === 'DELETE') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'OIDC configuration removed successfully',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (calls.url.endsWith('/account/oidc/test') && calls.method === 'POST') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          issuer: 'https://idp.example.com',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(null, { status: 404 });
+  };
+
+  const client = new OnlyDNSClient({
+    apiToken: 'test-token',
+    baseUrl: 'https://api.onlydns.com/v1',
+    fetch: mockFetch,
+  });
+
+  // 1. getAccount
+  const acc = await client.getAccount();
+  assert.equal(calls.url, 'https://api.onlydns.com/v1/account');
+  assert.equal(acc.accountId, '018f1234-5678-7000-8000-000000000001');
+  assert.equal(acc.package?.features.customSSO, true);
+
+  // 2. getAccountOidc
+  const oidc = await client.getAccountOidc();
+  assert.equal(calls.url, 'https://api.onlydns.com/v1/account/oidc');
+  assert.equal(oidc.configured, true);
+
+  // 3. saveAccountOidc
+  const saved = await client.saveAccountOidc({
+    discoveryUrl: 'https://idp.example.com/.well-known/openid-configuration',
+    clientId: 'client-123',
+    enforceSso: true,
+  });
+  assert.equal(calls.url, 'https://api.onlydns.com/v1/account/oidc');
+  assert.equal(saved.enforceSso, true);
+
+  // 4. testAccountOidc
+  const testRes = await client.testAccountOidc('https://idp.example.com/.well-known/openid-configuration');
+  assert.equal(calls.url, 'https://api.onlydns.com/v1/account/oidc/test');
+  assert.equal(testRes.success, true);
+
+  // 5. deleteAccountOidc
+  const delRes = await client.deleteAccountOidc();
+  assert.equal(calls.url, 'https://api.onlydns.com/v1/account/oidc');
+  assert.equal(delRes.success, true);
+});
